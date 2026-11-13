@@ -135,6 +135,13 @@ printf 'Repository\tBranch\tCommit\n' > "$THIRD_PARTY_SOURCES_FILE"
 # 修改默认IP & 固件名称 & 编译署名和时间
 sed -i 's/192.168.1.1/192.168.2.1/g' package/base-files/files/bin/config_generate
 sed -i "s/hostname='.*'/hostname='Roc'/g" package/base-files/files/bin/config_generate
+
+# Rust: 禁用从 Rust CI 下载预编译 LLVM（旧构建已被上游清理、下载会 404），改为本地源码编译 LLVM
+if [ -f feeds/packages/lang/rust/Makefile ]; then
+  sed -i 's/--set=llvm\.download-ci-llvm=true/--set=llvm.download-ci-llvm=false/' feeds/packages/lang/rust/Makefile
+  echo "Patched rust Makefile (download-ci-llvm):"
+  grep -n "download-ci-llvm" feeds/packages/lang/rust/Makefile || true
+fi
 luci_system_js="feeds/luci/modules/luci-mod-status/htdocs/luci-static/resources/view/status/include/10_system.js"
 firmware_version_anchor="_('Firmware Version'), (L.isObject(boardinfo.release) ? boardinfo.release.description + ' / ' : '') + (luciversion || ''),"
 grep -Fq "$firmware_version_anchor" "$luci_system_js" || { echo "Error: LuCI firmware version anchor was not found in $luci_system_js" >&2; exit 1; }
